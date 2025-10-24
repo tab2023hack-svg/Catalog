@@ -1,0 +1,5 @@
+{
+  "name": "Product Catalog PDF Generator",
+  "description": "A web application to manage commercial products and generate professional, print-ready PDF catalogs. Users can add products with details like sizes, colors, and images, and then export them into customizable A4 PDF templates.",
+  "requestFramePermissions": []
+}
