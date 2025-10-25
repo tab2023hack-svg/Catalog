@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Product, Color, ProjectData, PdfTheme, ProductImage } from './types';
@@ -80,9 +81,6 @@ const App: React.FC = () => {
           product.images.map(async (img) => {
             const blob = await getImage(img.id);
             if (!blob) return null;
-            // FIX: The type predicate `img is ProductImage` requires `ProductImage` to be assignable to the type of `img`.
-            // By explicitly typing `newImageId` as `string`, we prevent TypeScript from inferring a more specific template literal type from `crypto.randomUUID()`,
-            // which would make the element type of `newImages` incompatible with `ProductImage`.
             const newImageId: string = crypto.randomUUID();
             await saveImage(newImageId, blob);
             return { ...img, id: newImageId };
@@ -94,6 +92,7 @@ const App: React.FC = () => {
           id: crypto.randomUUID(),
           code: `${product.code}-نسخة`,
           images: newImages.filter((img): img is ProductImage => img !== null),
+          sizeChart: product.sizeChart ? product.sizeChart.map(row => ({...row, id: crypto.randomUUID()})) : [],
         };
 
         setProjectData(prevData => ({

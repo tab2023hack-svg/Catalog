@@ -14,6 +14,12 @@ export interface ProductImage {
   isCover: boolean;
 }
 
+export interface SizeChartEntry {
+  id: string;
+  size: string;
+  width: string;
+}
+
 export interface Product {
   id: string;
   code: string;
@@ -24,6 +30,7 @@ export interface Product {
   colors: Color[];
   images: ProductImage[];
   notes?: string;
+  sizeChart?: SizeChartEntry[];
 }
 
 export interface ProjectData {

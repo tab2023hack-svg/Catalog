@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Product, PdfTheme, ProductImage } from '../types';
 
@@ -38,7 +39,7 @@ const PriceTag: React.FC<{ price: number; theme: PdfTheme }> = ({ price, theme }
 
 
 export const PdfPageTemplate: React.FC<PdfPageTemplateProps> = ({ product, theme }) => {
-  const imagesToShow = product.images.slice(0, 6);
+  const imagesToShow = product.images;
 
   const ImageCell: React.FC<{ image: ProductImage }> = ({ image }) => (
     <div className="bg-gray-100 rounded-lg overflow-hidden border">
@@ -59,6 +60,9 @@ export const PdfPageTemplate: React.FC<PdfPageTemplateProps> = ({ product, theme
       </div>
     );
   };
+  
+  const tableBorderStyle = `1px solid ${theme === PdfTheme.FANCY ? '#555' : '#999'}`;
+
 
   return (
     <div className="page-break-before">
@@ -97,6 +101,42 @@ export const PdfPageTemplate: React.FC<PdfPageTemplateProps> = ({ product, theme
                                     </div>
                                 </div>
                              </div>
+                             {product.sizeChart && product.sizeChart.length > 0 && (
+                                <div className="pt-2">
+                                    <table 
+                                        style={{
+                                            width: '100%',
+                                            borderCollapse: 'collapse',
+                                            border: tableBorderStyle,
+                                            fontSize: '14px',
+                                            textAlign: 'center',
+                                            color: theme === PdfTheme.FANCY ? 'white' : 'black',
+                                        }}
+                                    >
+                                        <thead>
+                                            <tr style={{ backgroundColor: '#d90429', color: 'white', fontWeight: 'bold' }}>
+                                                <th colSpan={(product.sizeChart.length || 0) + 1} style={{ border: tableBorderStyle, padding: '8px' }}>
+                                                    SIZE CHART
+                                                </th>
+                                            </tr>
+                                            <tr className={theme === PdfTheme.FANCY ? 'bg-gray-700' : 'bg-gray-100'}>
+                                                <th style={{ border: tableBorderStyle, padding: '6px', fontWeight: 'bold' }}>SIZE</th>
+                                                {product.sizeChart.map((row) => (
+                                                    <th key={row.id} style={{ border: tableBorderStyle, padding: '6px' }}>{row.size}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style={{ border: tableBorderStyle, padding: '6px', fontWeight: 'bold' }}>WIDTH</td>
+                                                {product.sizeChart.map((row) => (
+                                                    <td key={row.id} style={{ border: tableBorderStyle, padding: '6px' }}>{row.width}</td>
+                                                ))}
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                             )}
                              {product.notes && (
                                 <div className="pt-2">
                                     <h2 className="text-lg font-bold mb-2">ملاحظات</h2>

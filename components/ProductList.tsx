@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Product, ProductImage } from '../types';
 import { EditIcon, TrashIcon, DuplicateIcon } from './icons';
@@ -45,18 +44,75 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete, onDuplicate }) => {
-  const coverImage = product.images.find(img => img.isCover) || product.images[0];
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    if (!product.images || product.images.length === 0) {
+      return 0;
+    }
+    const coverIndex = product.images.findIndex(img => img.isCover);
+    return coverIndex > -1 ? coverIndex : 0;
+  });
+
+  const hasMultipleImages = product.images.length > 1;
+
+  const goToPrevious = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex(prevIndex => (prevIndex === 0 ? product.images.length - 1 : prevIndex - 1));
+  };
+
+  const goToNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex(prevIndex => (prevIndex === product.images.length - 1 ? 0 : prevIndex + 1));
+  };
+  
+  const currentImage = product.images[currentIndex];
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col transition-shadow hover:shadow-xl">
-      <div className="relative">
-        {coverImage ? (
-             <ImageDisplay imageId={coverImage.id} altText={coverImage.alt} />
+      <div className="relative group">
+        {currentImage ? (
+          <ImageDisplay imageId={currentImage.id} altText={currentImage.alt} />
         ) : (
-            <div className="w-full h-48 bg-gray-300 flex items-center justify-center">
-                <span className="text-gray-500">No Image</span>
-            </div>
+          <div className="w-full h-48 bg-gray-300 flex items-center justify-center">
+            <span className="text-gray-500">No Image</span>
+          </div>
         )}
-        <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 text-sm rounded">{product.code}</div>
+        <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 text-sm rounded z-10">{product.code}</div>
+        
+        {hasMultipleImages && (
+          <>
+            <button
+              onClick={goToPrevious}
+              className="absolute top-1/2 left-2 -translate-y-1/2 bg-black bg-opacity-40 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-opacity-60"
+              aria-label="Previous image"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <button
+              onClick={goToNext}
+              className="absolute top-1/2 right-2 -translate-y-1/2 bg-black bg-opacity-40 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-opacity-60"
+              aria-label="Next image"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+              {product.images.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentIndex(index);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${currentIndex === index ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/75'}`}
+                  aria-label={`Go to image ${index + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
       <div className="p-4 flex-grow flex flex-col">
         <h3 className="text-lg font-bold text-gray-800">{product.name}</h3>
@@ -69,6 +125,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete, on
           <div className="flex flex-wrap gap-2 mt-2">
             {product.colors.map(c => <span key={c.id} className="w-5 h-5 rounded-full border" style={{ backgroundColor: c.hex }} title={c.name}></span>)}
           </div>
+          {product.sizeChart && product.sizeChart.length > 0 && (
+            <div className="mt-3">
+                <table className="w-full text-center text-xs border-collapse border border-gray-300">
+                    <thead>
+                        <tr className="bg-gray-50">
+                            <th className="border border-gray-300 p-1 font-semibold text-gray-700">المقاس</th>
+                            <th className="border border-gray-300 p-1 font-semibold text-gray-700">العرض</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {product.sizeChart.map((row) => (
+                            <tr key={row.id}>
+                                <td className="border border-gray-300 p-1 text-gray-800">{row.size}</td>
+                                <td className="border border-gray-300 p-1 text-gray-800">{row.width}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+          )}
         </div>
         <div className="mt-4 pt-4 border-t border-gray-200 flex justify-end gap-2">
           <button onClick={() => onDuplicate(product)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full" title="تكرار"><DuplicateIcon className="w-5 h-5" /></button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, ChangeEvent } from 'react';
-import { Product, ProductImage, Size, Color } from '../types';
+import { Product, ProductImage, Size, Color, SizeChartEntry } from '../types';
 import { AVAILABLE_SIZES } from '../constants';
 import { PlusIcon, TrashIcon, UploadIcon, CheckCircleIcon, EditIcon, XMarkIcon } from './icons';
 import { saveImage, deleteImage, getImage } from '../db';
@@ -150,7 +150,7 @@ const ImageUploader: React.FC<{
 
 export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave, onCancel, availableColors, onColorAdd, onColorUpdate }) => {
   const [product, setProduct] = useState<Product>({
-    id: '', code: '', name: '', price: 0, quantity: 1, sizes: [], colors: [], images: [], notes: ''
+    id: '', code: '', name: '', price: 0, quantity: 1, sizes: [], colors: [], images: [], notes: '', sizeChart: []
   });
   const [newColorName, setNewColorName] = useState('');
   const [newColorHex, setNewColorHex] = useState('#000000');
@@ -159,7 +159,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave,
 
   useEffect(() => {
     const initialState: Product = {
-        id: crypto.randomUUID(), code: '', name: '', price: 0, quantity: 1, sizes: [], colors: [], images: [], notes: ''
+        id: crypto.randomUUID(), code: '', name: '', price: 0, quantity: 1, sizes: [], colors: [], images: [], notes: '', sizeChart: []
     };
 
     if (productToEdit) {
@@ -173,7 +173,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave,
             };
           })
         );
-        setProduct({ ...productToEdit, images: hydratedImages });
+        setProduct({ ...productToEdit, images: hydratedImages, sizeChart: productToEdit.sizeChart || [] });
       };
       hydrateImages();
     } else {
@@ -260,6 +260,44 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave,
   const handleImagesChange = useCallback((imagesUpdater: React.SetStateAction<ProductImage[]>) => {
      setProduct(prev => ({ ...prev, images: typeof imagesUpdater === 'function' ? imagesUpdater(prev.images) : imagesUpdater }));
   }, []);
+
+  const handleSizeChartChange = (index: number, field: 'size' | 'width', value: string) => {
+    setProduct(prev => {
+        const updatedSizeChart = (prev.sizeChart || []).map((item, i) => {
+            if (i === index) {
+                return { ...item, [field]: value };
+            }
+            return item;
+        });
+        return { ...prev, sizeChart: updatedSizeChart };
+    });
+  };
+
+  const addSizeChartRow = () => {
+    setProduct(prev => ({
+        ...prev,
+        sizeChart: [...(prev.sizeChart || []), { id: crypto.randomUUID(), size: '', width: '' }]
+    }));
+  };
+  
+  const createDefaultSizeChart = () => {
+    const defaultSizes = ['M', 'L', 'XL', '2XL'];
+    setProduct(prev => ({
+        ...prev,
+        sizeChart: defaultSizes.map(size => ({
+            id: crypto.randomUUID(),
+            size: size,
+            width: ''
+        }))
+    }));
+  };
+
+  const removeSizeChartRow = (id: string) => {
+    setProduct(prev => ({
+        ...prev,
+        sizeChart: (prev.sizeChart || []).filter(row => row.id !== id)
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -379,6 +417,49 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave,
           <div>
             <label htmlFor="notes" className="block text-sm font-medium text-gray-700">ملاحظات إضافية</label>
             <textarea name="notes" id="notes" value={product.notes} onChange={handleChange} rows={3} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-700">جدول المقاسات</h3>
+            <div className="mt-2 border rounded-md p-4 space-y-3 bg-gray-50">
+                {(product.sizeChart || []).length === 0 ? (
+                    <button
+                        type="button"
+                        onClick={createDefaultSizeChart}
+                        className="w-full text-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        إنشاء جدول مقاسات افتراضي (M - 2XL)
+                    </button>
+                ) : (
+                    <>
+                        {(product.sizeChart || []).map((row, index) => (
+                            <div key={row.id} className="flex items-center gap-3">
+                                <input
+                                    type="text"
+                                    placeholder="المقاس (مثال: M)"
+                                    value={row.size}
+                                    onChange={(e) => handleSizeChartChange(index, 'size', e.target.value)}
+                                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="العرض (مثال: 55cm)"
+                                    value={row.width}
+                                    onChange={(e) => handleSizeChartChange(index, 'width', e.target.value)}
+                                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <button type="button" onClick={() => removeSizeChartRow(row.id)} className="p-2 text-red-500 hover:bg-red-100 rounded-full" title="حذف الصف">
+                                    <TrashIcon className="w-5 h-5" />
+                                </button>
+                            </div>
+                        ))}
+                        <button type="button" onClick={addSizeChartRow} className="flex items-center gap-2 text-sm text-blue-600 hover:underline font-semibold pt-2">
+                            <PlusIcon className="w-4 h-4" />
+                            إضافة صف (مثلاً: 3XL)
+                        </button>
+                    </>
+                )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-4 pt-4 border-t">
