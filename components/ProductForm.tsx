@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { Product, ProductImage, Size, Color } from '../types';
 import { AVAILABLE_SIZES } from '../constants';
-import { PlusIcon, TrashIcon, UploadIcon, CheckCircleIcon } from './icons';
+import { PlusIcon, TrashIcon, UploadIcon, CheckCircleIcon, EditIcon, XMarkIcon } from './icons';
 import { saveImage, deleteImage, getImage } from '../db';
 
 
@@ -11,6 +11,7 @@ interface ProductFormProps {
   onCancel: () => void;
   availableColors: Color[];
   onColorAdd: (color: Omit<Color, 'id'>) => void;
+  onColorUpdate: (color: Color) => void;
 }
 
 const ImageUploader: React.FC<{
@@ -147,12 +148,14 @@ const ImageUploader: React.FC<{
     );
 };
 
-export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave, onCancel, availableColors, onColorAdd }) => {
+export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave, onCancel, availableColors, onColorAdd, onColorUpdate }) => {
   const [product, setProduct] = useState<Product>({
     id: '', code: '', name: '', price: 0, quantity: 1, sizes: [], colors: [], images: [], notes: ''
   });
   const [newColorName, setNewColorName] = useState('');
   const [newColorHex, setNewColorHex] = useState('#000000');
+  const [editingColorId, setEditingColorId] = useState<string | null>(null);
+  const [editingColorName, setEditingColorName] = useState('');
 
   useEffect(() => {
     const initialState: Product = {
@@ -227,6 +230,32 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave,
         setNewColorHex('#000000');
     }
   };
+
+  const handleStartEditColor = (color: Color) => {
+    setEditingColorId(color.id);
+    setEditingColorName(color.name);
+  };
+
+  const handleCancelEditColor = () => {
+    setEditingColorId(null);
+    setEditingColorName('');
+  };
+
+  const handleSaveColorUpdate = () => {
+    if (!editingColorId) return;
+
+    if (!editingColorName.trim()) {
+        handleCancelEditColor();
+        return;
+    }
+    
+    const colorToUpdate = availableColors.find(c => c.id === editingColorId);
+    if (colorToUpdate) {
+        onColorUpdate({ ...colorToUpdate, name: editingColorName.trim() });
+    }
+    
+    handleCancelEditColor();
+  };
   
   const handleImagesChange = useCallback((imagesUpdater: React.SetStateAction<ProductImage[]>) => {
      setProduct(prev => ({ ...prev, images: typeof imagesUpdater === 'function' ? imagesUpdater(prev.images) : imagesUpdater }));
@@ -296,12 +325,42 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave,
           <div>
             <h3 className="text-sm font-medium text-gray-700">الألوان المتاحة</h3>
             <div className="p-4 border rounded-md mt-2 space-y-4">
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3 items-center">
                     {availableColors.map(color => (
-                         <button type="button" key={color.id} onClick={() => handleColorToggle(color)} className={`flex items-center gap-2 p-2 rounded-lg border-2 transition-all ${product.colors.some(c => c.id === color.id) ? 'border-blue-500 bg-blue-50' : 'border-transparent bg-gray-100 hover:bg-gray-200'}`}>
-                            <span className="w-5 h-5 rounded-full" style={{ backgroundColor: color.hex }}></span>
-                            <span>{color.name}</span>
-                        </button>
+                        <div key={color.id}>
+                            {editingColorId === color.id ? (
+                                <div className="flex items-center gap-1 p-1 bg-gray-200 rounded-lg shadow-sm">
+                                    <span className="w-5 h-5 rounded-full border" style={{ backgroundColor: color.hex }}></span>
+                                    <input
+                                        type="text"
+                                        value={editingColorName}
+                                        onChange={(e) => setEditingColorName(e.target.value)}
+                                        className="w-28 p-1 h-8 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') { e.preventDefault(); handleSaveColorUpdate(); }
+                                            if (e.key === 'Escape') handleCancelEditColor();
+                                        }}
+                                    />
+                                    <button type="button" onClick={handleSaveColorUpdate} className="p-1 text-green-600 hover:bg-green-100 rounded-full" title="حفظ">
+                                        <CheckCircleIcon className="w-5 h-5" />
+                                    </button>
+                                    <button type="button" onClick={handleCancelEditColor} className="p-1 text-gray-600 hover:bg-gray-300 rounded-full" title="إلغاء">
+                                        <XMarkIcon className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1 group">
+                                    <button type="button" onClick={() => handleColorToggle(color)} className={`flex items-center gap-2 p-2 rounded-lg border-2 transition-all ${product.colors.some(c => c.id === color.id) ? 'border-blue-500 bg-blue-50' : 'border-transparent bg-gray-100 hover:bg-gray-200'}`}>
+                                        <span className="w-5 h-5 rounded-full" style={{ backgroundColor: color.hex }}></span>
+                                        <span>{color.name}</span>
+                                    </button>
+                                    <button type="button" onClick={() => handleStartEditColor(color)} className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" title="تعديل اسم اللون">
+                                        <EditIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     ))}
                 </div>
                  <div className="flex items-center gap-2 pt-4 border-t">

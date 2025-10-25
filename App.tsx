@@ -111,6 +111,27 @@ const App: React.FC = () => {
         }));
     };
 
+    const handleUpdateColor = (updatedColor: Color) => {
+        setProjectData(prevData => {
+            const newColors = prevData.colors.map(color =>
+                color.id === updatedColor.id ? updatedColor : color
+            );
+            const newProducts = prevData.products.map(product => {
+                const needsUpdate = product.colors.some(c => c.id === updatedColor.id);
+                if (!needsUpdate) return product;
+                return {
+                    ...product,
+                    colors: product.colors.map(c => c.id === updatedColor.id ? updatedColor : c)
+                };
+            });
+            return {
+                ...prevData,
+                colors: newColors,
+                products: newProducts,
+            };
+        });
+    };
+
     const generatePdf = async () => {
         if (projectData.products.length === 0) {
             alert("لا يوجد منتجات للتصدير");
@@ -223,6 +244,7 @@ const App: React.FC = () => {
                     onCancel={handleCancelForm}
                     availableColors={projectData.colors}
                     onColorAdd={handleAddColor}
+                    onColorUpdate={handleUpdateColor}
                 />
             )}
         </div>
