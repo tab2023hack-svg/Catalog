@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { Product, ProductImage, Size, Color } from '../types';
 import { AVAILABLE_SIZES } from '../constants';
@@ -200,13 +199,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave,
     }));
   };
 
-  const handleSelectAllSizes = () => {
-    if (product.sizes.length === AVAILABLE_SIZES.length) {
-      setProduct(prev => ({ ...prev, sizes: [] }));
-    } else {
-      setProduct(prev => ({ ...prev, sizes: AVAILABLE_SIZES }));
-    }
+  const handleSelectMto2XL = () => {
+    setProduct(prev => ({ ...prev, sizes: ['M', 'L', 'XL', '2XL'] }));
   };
+
+  const handleSelectMto3XL = () => {
+    setProduct(prev => ({ ...prev, sizes: AVAILABLE_SIZES }));
+  };
+  
+  const handleClearSizes = () => {
+      setProduct(prev => ({...prev, sizes: []}));
+  }
 
   const handleColorToggle = (color: Color) => {
      setProduct(prev => ({
@@ -276,8 +279,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSave,
                   <span>{size}</span>
                 </label>
               ))}
-              <button type="button" onClick={handleSelectAllSizes} className="text-sm text-blue-600 hover:underline">
-                {product.sizes.length === AVAILABLE_SIZES.length ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+            </div>
+            <div className="mt-2 flex items-center gap-4 pt-2 border-t">
+              <button type="button" onClick={handleSelectMto2XL} className="text-sm text-blue-600 hover:underline">
+                تحديد (M - 2XL)
+              </button>
+              <button type="button" onClick={handleSelectMto3XL} className="text-sm text-blue-600 hover:underline">
+                تحديد (M - 3XL)
+              </button>
+              <button type="button" onClick={handleClearSizes} className="text-sm text-red-600 hover:underline">
+                مسح الكل
               </button>
             </div>
           </div>

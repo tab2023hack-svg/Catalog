@@ -1,5 +1,5 @@
 
-export type Size = 'M' | 'L' | 'XL' | '2XL';
+export type Size = 'M' | 'L' | 'XL' | '2XL' | '3XL';
 
 export interface Color {
   id: string;
